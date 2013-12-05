@@ -194,6 +194,27 @@ for movie in validation_data:
     filename = movie[0].replace(' ', '_') + '.txt'
     validation_tweets.append((movie[1], parse_tweets(filename)))
 
+def exportSVMLightData(tweets, map_so_far, filename):
+    light_data = ''
+
+    next_val = len(map_so_far) + 1
+    for movie in tweets:
+        light_data += str(scoreCalc(movie))
+        for k, v in movie[1].iteritems():
+            if map_so_far[k] == 0:
+                map_so_far[k] = next_val
+                next_val += 1
+            light_data += ' ' + str(map_so_far[k]) + ':' + str(v) 
+        light_data += '\n'
+
+    svmfile = open(filename, 'w')
+    svmfile.write(light_data)
+    svmfile.close()
+
+exportSVMLightData(training_tweets, defaultdict(int), "tweets.train")
+
+#TODO: here!
+
 max_k = len(training_tweets)
 
 errors = [0.0 for i in range(1, max_k)]
