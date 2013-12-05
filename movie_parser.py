@@ -2,6 +2,7 @@ from datetime import datetime
 from random import shuffle
 from math import sqrt
 from collections import defaultdict
+import os
 
 def stringToDate(date):
     parts = date.split(' ')
@@ -183,16 +184,32 @@ validation_data = score_data[:split_value]
 log_output('training movies: ' + str(len(training_data)))
 log_output('validation movies: ' + str(len(validation_data)))
 
-training_tweets = []
+training_tweets_raw = []
 validation_tweets = []
+
+documentFreq = defaultdict(float)
 
 for movie in training_data:
     filename = movie[0].replace(' ', '_') + '.txt'
-    training_tweets.append((movie[1], parse_tweets(filename)))
+    parsed = parse_tweets(filename)
+    training_tweets_raw.append((movie[1], parsed))
+    for k, v in parsed.iteritems():
+        documentFreq[k] += 1.0 / len(training_data)
+
+training_tweets = []
+for movie, raw_dict in training_tweets_raw:
+    upd_dict = defaultdict(float)
+    for k, v in raw_dict.iteritems():
+        upd_dict[k] = raw_dict[k] / documentFreq[k]
+    training_tweets.append((movie, upd_dict))
     
 for movie in validation_data:
     filename = movie[0].replace(' ', '_') + '.txt'
-    validation_tweets.append((movie[1], parse_tweets(filename)))
+    raw_dict = parse_tweets(filename)
+    upd_dict = defaultdict(float)
+    for k, v in raw_dict.iteritems():
+        upd_dict[k] = raw_dict[k] / documentFreq[k] if documentFreq[k] != 0 else 0
+    validation_tweets.append((movie[1], upd_dict))
 
 def exportSVMLightData(tweets, map_so_far, filename):
     light_data = ''
@@ -200,11 +217,16 @@ def exportSVMLightData(tweets, map_so_far, filename):
     next_val = len(map_so_far) + 1
     for movie in tweets:
         light_data += str(scoreCalc(movie))
+        light_map = defaultdict(float)
         for k, v in movie[1].iteritems():
             if map_so_far[k] == 0:
                 map_so_far[k] = next_val
                 next_val += 1
-            light_data += ' ' + str(map_so_far[k]) + ':' + str(v) 
+            light_map[map_so_far[k]] = v 
+
+        # Sort the indices
+        for k, v in zip(sorted(light_map), [light_map[i] for i in sorted(light_map)]):
+            light_data += ' ' + str(k) + ':' + str(v)
         light_data += '\n'
 
     svmfile = open(filename, 'w')
@@ -212,8 +234,10 @@ def exportSVMLightData(tweets, map_so_far, filename):
     svmfile.close()
 
 exportSVMLightData(training_tweets, defaultdict(int), "tweets.train")
+exportSVMLightData(validation_tweets, defaultdict(int), "tweets.val")
 
-#TODO: here!
+os.system("./svm_learn -z r tweets.train model")
+os.system("./svm_classify tweets.val model predictions")
 
 max_k = len(training_tweets)
 
