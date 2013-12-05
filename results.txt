@@ -1,2 +1,0 @@
-training movies: 553
-validation movies: 138
