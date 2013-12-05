@@ -233,11 +233,26 @@ def exportSVMLightData(tweets, map_so_far, filename):
     svmfile.write(light_data)
     svmfile.close()
 
-exportSVMLightData(training_tweets, defaultdict(int), "tweets.train")
-exportSVMLightData(validation_tweets, defaultdict(int), "tweets.val")
+def runSVMLight():
+    exportSVMLightData(training_tweets, defaultdict(int), "tweets.train")
+    exportSVMLightData(validation_tweets, defaultdict(int), "tweets.val")
 
-os.system("./svm_learn -z r tweets.train model")
-os.system("./svm_classify tweets.val model predictions")
+    os.system("./svm_learn -z r tweets.train model")
+    os.system("./svm_classify tweets.val model predictions")
+
+    # Append the difference in the tweets
+    predictions = open("predictions", 'r')
+    difpred = open ("predictions-dif", 'w')
+
+    # Write the differences
+    for score, dictionary in validation_tweets:
+        difpred.write(str(abs(float(predictions.readline()) - float(score))) + '\n')
+
+    predictions.close()
+    difpred.close()
+
+
+runSVMLight()
 
 max_k = len(training_tweets)
 
