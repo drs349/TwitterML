@@ -14,7 +14,7 @@ headers = {
     'Content-Type': 'application/json; charset=UTF-8'
 }
 
-apikey = 'SMQWWQFZBRDZTIXJMUMQAAAAABNQ6RLLSVJAAAAAAAAFQGYA'
+apikey = 'XET5BXMU7AO6MXCZ3UMQAAAAAA4W66TBZ5JAAAAAAAAFQGYA'
 numTweets = '100'
 base_url = 'http://otter.topsy.com/search.json'
 removed_terms = '-review -reviews -RT -premiere'
