@@ -2,7 +2,8 @@ import httplib2 as http
 import json
 from datetime import datetime
 from datetime import timedelta
-import movie_parser as parser
+from movie_parser import getScoreData
+from movie_parser import stringToDate
 
 try:
     from urlparse import urlparse
@@ -33,26 +34,32 @@ def getMinTime(movie_release_date):
 def getMaxTime(movie_release_date):
     return movie_release_date.strftime("%s")
 
-def getURL(score_data_element):
-    mintime = getMinTime(parser.stringToDate(score_data_element[2]))
-    maxtime = getMaxTime(parser.stringToDate(score_data_element[2]))
-    uri = '?' + 'q=' + getQuerry(score_data_element[0]) + '&mintime=' + mintime + '&maxtime=' + maxtime + '&perpage=' + numTweets + '&type=tweet' + '&allow_lang=en' + '&apikey=' + apikey
+def getURL(score_data_element, page):
+    mintime = getMinTime(stringToDate(score_data_element[2]))
+    maxtime = getMaxTime(stringToDate(score_data_element[2]))
+    uri = '?' + 'q=' + getQuerry(score_data_element[0]) + '&mintime=' + mintime + '&maxtime=' + maxtime + '&perpage=' + numTweets + '&type=tweet' + '&allow_lang=en' + '&apikey=' + apikey + '&page=' + str(page)
     return base_url + uri
 
-for element in parser.score_data[0:]:
-    target = urlparse(getURL(element))
-    response, content = h.request(target.geturl(), method, body, headers)
-    # assume that content is a json reply
-    # parse content with the json module
-    data = json.loads(content)
-    tweet_list = data["response"]["list"]
+for element in getScoreData('2013_movie_data.csv')[5:10]:
+    page = 1
+    keepGoing = True
     filename = element[0].replace(' ', '_') + '.txt'
     f = open(filename, "w")
-    for tweet in tweet_list:
-        clean_tweet = tweet["content"].encode('ascii', 'ignore')
-        #print clean_tweet
-        f.write(clean_tweet + '\n')
-        f.write('---\n')
+    while keepGoing:
+        target = urlparse(getURL(element, page))
+        response, content = h.request(target.geturl(), method, body, headers)
+        # assume that content is a json reply
+        # parse content with the json module
+        data = json.loads(content)
+        tweet_list = data["response"]["list"]
+        for tweet in tweet_list:
+            clean_tweet = tweet["content"].encode('ascii', 'ignore')
+            #print clean_tweet
+            f.write(clean_tweet + '\n')
+            f.write('---\n')
+        keepGoing = (len(tweet_list) == 100)
+        page += 1
+    f.close()
     print filename, 'done'
         
 

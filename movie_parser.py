@@ -163,16 +163,19 @@ def log_output(str):
     print str
 
 
-score_data_file = open('2012_movie_data.csv', 'r')
-score_data_lines = []
-for line in score_data_file:
-    line = line.rstrip()
-    line = line.replace('"', '')
-    line = line.replace(':', '')
-    line = line.replace('-', '')
-    line = line.replace("'", '')
-    score_data_lines.append(line)
-score_data = zip(score_data_lines[0::3], score_data_lines[1::3], score_data_lines[2::3])
+def getScoreData(filename):
+    score_data_file = open(filename, 'r')
+    score_data_lines = []
+    for line in score_data_file:
+        line = line.rstrip()
+        line = line.replace('"', '')
+        line = line.replace(':', '')
+        line = line.replace('-', '')
+        line = line.replace("'", '')
+        score_data_lines.append(line)
+    return zip(score_data_lines[0::3], score_data_lines[1::3], score_data_lines[2::3])
+
+"""score_data = getScoreData('2012_movie_data.csv')
 
 shuffle(score_data)
 
@@ -297,4 +300,4 @@ for k in range(1, max_k):
         min_error = errors[k-1]
         k_of_min_error = k
     print str(k) + ' yields average error ' + str(errors[k-1])
-log_output(str(k_of_min_error) + ' achieved the minimum error, which was ' + str(min_error))
+log_output(str(k_of_min_error) + ' achieved the minimum error, which was ' + str(min_error))"""
