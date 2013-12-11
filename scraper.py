@@ -40,7 +40,7 @@ def getURL(score_data_element, page):
     uri = '?' + 'q=' + getQuerry(score_data_element[0]) + '&mintime=' + mintime + '&maxtime=' + maxtime + '&perpage=' + numTweets + '&type=tweet' + '&allow_lang=en' + '&apikey=' + apikey + '&page=' + str(page)
     return base_url + uri
 
-for element in getScoreData('2012_movie_data.csv')[0:]:
+for element in getScoreData('2013_movie_data.csv')[731:]:
     page = 1
     keepGoing = True
     filename = element[0].replace(' ', '_') + '.txt'
