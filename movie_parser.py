@@ -107,8 +107,11 @@ def LN_norm(first, second, n):
 def scoreCalc(point):
     return float(point[0])
 
-def runKNN(point, trainingData, k=5, norm=L2_norm):
+def runKNN(point, trainingData, k=5, norm=L2_norm, print_closest=False):
     relData = sorted(trainingData, key=lambda x: norm(point[1], x[1]))[:k]
+    if print_closest:
+        for movie in relData:
+            print movie[2]
     distances = map(lambda x: norm(point[1], x[1]), relData)
     scores = map(scoreCalc, relData)
 
@@ -122,10 +125,16 @@ def runKNN(point, trainingData, k=5, norm=L2_norm):
 
     return score
 
+correct_side = 0
+incorrect_side = 0
+
 def runKNN_all(point, trainingData, max_k, true_value, norm=L2_norm):
     relData = sorted(trainingData, key=lambda x: norm(point[1], x[1]))
     distances = map(lambda x: norm(point[1], x[1]), relData)
     scores = map(scoreCalc, relData)
+
+    global correct_side
+    global incorrect_side
 
     errors = []
     for k in range(1, max_k):
@@ -136,7 +145,16 @@ def runKNN_all(point, trainingData, max_k, true_value, norm=L2_norm):
         score = 0
         for i in range(k):
             score += distances[i] / float(totalDistance) * scores[i]
+        score = (score - 57)*5 + 57
         errors.append(abs(score - true_value))
+        if k == 15:
+            if score > 57 and true_value > 57:
+                correct_side += 1
+            elif score <= 57 and true_value <= 57:
+                correct_side += 1
+            else:
+                incorrect_side += 1
+    print 'correct side:', correct_side, 'incorrect side:', incorrect_side
     return errors
 
 def log_output(str):
@@ -192,23 +210,23 @@ documentFreq = defaultdict(float)
 for movie in training_data:
     filename = movie[0].replace(' ', '_') + '.txt'
     parsed = parse_tweets(filename)
-    training_tweets_raw.append((movie[1], parsed))
+    training_tweets_raw.append((movie[1], parsed, movie[0]))
     for k, v in parsed.iteritems():
         documentFreq[k] += 1.0 / len(training_data)
 
 training_tweets = []
-for movie, raw_dict in training_tweets_raw:
+for movie_score, raw_dict, movie_name in training_tweets_raw:
     upd_dict = defaultdict(float)
     for k, v in raw_dict.iteritems():
-        upd_dict[k] = raw_dict[k] / documentFreq[k]
-    training_tweets.append((movie, upd_dict))
+        upd_dict[k] = raw_dict[k] #/ documentFreq[k]
+    training_tweets.append((movie_score, upd_dict, movie_name))
     
 for movie in validation_data:
     filename = movie[0].replace(' ', '_') + '.txt'
     raw_dict = parse_tweets(filename)
     upd_dict = defaultdict(float)
     for k, v in raw_dict.iteritems():
-        upd_dict[k] = raw_dict[k] / documentFreq[k] if documentFreq[k] != 0 else 0
+        upd_dict[k] = raw_dict[k] #/ documentFreq[k] if documentFreq[k] != 0 else 0
     validation_tweets.append((movie[1], upd_dict))
 
 def exportSVMLightData(tweets, map_so_far, filename):
@@ -238,6 +256,13 @@ exportSVMLightData(validation_tweets, defaultdict(int), "tweets.val")
 
 os.system("./svm_learn -z r tweets.train model")
 os.system("./svm_classify tweets.val model predictions")
+
+zdt_dict = parse_tweets('Zero_Dark_Thirty.txt')
+zdt_tweets = zdt_dict.iteritems()
+zdt_sorted = sorted(zdt_tweets, key=lambda x: x[1], reverse=True)
+for word in zdt_sorted:
+    print word
+print runKNN((95, zdt_dict), training_tweets, k=20, norm=L1_norm, print_closest=True)
 
 max_k = len(training_tweets)
 
